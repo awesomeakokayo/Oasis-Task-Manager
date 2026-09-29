@@ -42,7 +42,7 @@ interface Task {
     <div class="app-shell">
       <aside class="sidebar" [class.open]="mobileNavOpen">
         <div class="brand">
-          <div class="brand-mark"><svg lucideListTodo [size]="19"></svg></div>
+          <div class="brand-mark"><svg lucideListTodo width="19" height="19"></svg></div>
           <div><strong>OASIS</strong><span>Task Manager</span></div>
         </div>
 
@@ -59,11 +59,11 @@ interface Task {
           <button class="category-link" *ngFor="let category of categories" (click)="selectCategory(category)">
             <span class="dot"></span>{{ category }}
           </button>
-          <button class="category-link muted" (click)="openEditor()"><span class="plus"><svg lucidePlus [size]="14"></svg></span> Add task</button>
+          <button class="category-link muted" (click)="openEditor()"><span class="plus"><svg lucidePlus width="14" height="14"></svg></span> Add task</button>
         </div>
 
         <div class="focus-card">
-          <span class="focus-icon"><svg lucideStar [size]="16"></svg></span>
+          <span class="focus-icon"><svg lucideStar width="16" height="16"></svg></span>
           <strong>Keep your focus</strong>
           <p>Finish one important task before moving to the next.</p>
         </div>
@@ -73,9 +73,9 @@ interface Task {
 
       <section class="content">
         <header class="topbar">
-          <button class="mobile-menu" (click)="mobileNavOpen=!mobileNavOpen" aria-label="Open navigation"><svg lucideMenu [size]="21"></svg></button>
+          <button class="mobile-menu" (click)="mobileNavOpen=!mobileNavOpen" aria-label="Open navigation"><svg lucideMenu width="21" height="21"></svg></button>
           <div class="search">
-            <span class="search-icon"><svg lucideSearch [size]="17"></svg></span>
+            <span class="search-icon"><svg lucideSearch width="17" height="17"></svg></span>
             <input [(ngModel)]="q" (ngModelChange)="load()" placeholder="Search your tasks..." />
             <kbd>/</kbd>
           </div>
@@ -92,22 +92,22 @@ interface Task {
               <h1>{{ greeting }}, Awesome<span>.</span></h1>
               <p class="subtext">Here is what is happening with your tasks.</p>
             </div>
-            <button class="primary-btn" (click)="openEditor()"><svg lucidePlus [size]="17"></svg> New task</button>
+            <button class="primary-btn" (click)="openEditor()"><svg lucidePlus width="17" height="17"></svg> New task</button>
           </div>
 
           <section class="stats">
             <article class="stat-card">
-              <div class="stat-icon gunmetal"><svg lucideListTodo [size]="17"></svg></div>
+              <div class="stat-icon gunmetal"><svg lucideListTodo width="17" height="17"></svg></div>
               <div><span>Total tasks</span><strong>{{ tasks.length }}</strong></div>
               <small>in your workspace</small>
             </article>
             <article class="stat-card">
-              <div class="stat-icon bronze"><svg lucideClock3 [size]="17"></svg></div>
+              <div class="stat-icon bronze"><svg lucideClock3 width="17" height="17"></svg></div>
               <div><span>Due today</span><strong>{{ todayCount }}</strong></div>
               <small>need your attention</small>
             </article>
             <article class="stat-card">
-              <div class="stat-icon brick"><svg lucideCircleCheck [size]="17"></svg></div>
+              <div class="stat-icon brick"><svg lucideCircleCheck width="17" height="17"></svg></div>
               <div><span>Completed</span><strong>{{ completedCount }}</strong></div>
               <small>{{ progress }}% of all tasks</small>
             </article>
@@ -141,7 +141,7 @@ interface Task {
               <article class="task-row" *ngFor="let task of visibleTasks; trackBy: trackTask">
                 <button class="check" [class.done]="task.completed" (click)="toggleComplete(task)"
                         [attr.aria-label]="task.completed ? 'Mark task incomplete' : 'Mark task complete'">
-                  <svg *ngIf="task.completed" lucideCheck [size]="12"></svg>
+                  <svg *ngIf="task.completed" lucideCheck width="12" height="12"></svg>
                 </button>
                 <div class="task-body" [class.completed]="task.completed">
                   <div class="task-title-line">
@@ -152,17 +152,17 @@ interface Task {
                   <p *ngIf="task.description">{{ task.description }}</p>
                   <div class="meta">
                     <span *ngIf="task.category"><i class="mini-dot"></i>{{ task.category }}</span>
-                    <span [class.overdue]="isOverdue(task)" *ngIf="task.dueDate"><svg lucideClock3 [size]="11"></svg> {{ dueLabel(task) }}</span>
+                    <span [class.overdue]="isOverdue(task)" *ngIf="task.dueDate"><svg lucideClock3 width="11" height="11"></svg> {{ dueLabel(task) }}</span>
                     <span *ngIf="!task.dueDate" class="muted-meta">No due date</span>
                   </div>
                 </div>
-                <button class="icon-btn" (click)="openEditor(task)" aria-label="Edit task"><svg lucideMoreHorizontal [size]="18"></svg></button>
+                <button class="icon-btn" (click)="openEditor(task)" aria-label="Edit task"><svg lucideMoreHorizontal width="18" height="18"></svg></button>
               </article>
             </div>
 
             <ng-template #emptyState>
               <div class="empty">
-                <div class="empty-icon"><svg lucideCircleCheck [size]="24"></svg></div>
+                <div class="empty-icon"><svg lucideCircleCheck width="24" height="24"></svg></div>
                 <h3>{{ q ? 'No matching tasks' : 'Your list is clear' }}</h3>
                 <p>{{ q ? 'Try a different search or filter.' : 'Create a task and turn your plans into progress.' }}</p>
                 <button class="secondary-btn" (click)="openEditor()" *ngIf="!q">Create your first task</button>
@@ -177,7 +177,7 @@ interface Task {
       <section class="modal" (click)="$event.stopPropagation()">
         <div class="modal-head">
           <div><p class="eyebrow">{{ editingId ? 'EDIT TASK' : 'NEW TASK' }}</p><h2>{{ editingId ? 'Update task' : 'Create a task' }}</h2></div>
-          <button class="close-btn" (click)="closeEditor()" aria-label="Close"><svg lucideX [size]="20"></svg></button>
+          <button class="close-btn" (click)="closeEditor()" aria-label="Close"><svg lucideX width="20" height="20"></svg></button>
         </div>
 
         <form (ngSubmit)="submitTask()">
@@ -194,7 +194,7 @@ interface Task {
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="danger-btn" *ngIf="editingId" (click)="remove(editingId)"><svg lucideTrash2 [size]="14"></svg> Delete</button>
+            <button type="button" class="danger-btn" *ngIf="editingId" (click)="remove(editingId)"><svg lucideTrash2 width="14" height="14"></svg> Delete</button>
             <span></span>
             <button type="button" class="ghost-btn" (click)="closeEditor()">Cancel</button>
             <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : (editingId ? 'Save changes' : 'Create task') }}</button>
