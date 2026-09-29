@@ -1,100 +1,97 @@
 # Oasis Task Manager
 
-Full-stack task management application for the Oasis developer assessment.
+Full-stack task management application for the Oasis FullStack Developer Assessment.
+
+## Product flow
+
+```text
+/ → Login → Register (new users) → Dashboard
+                 ↓
+        authenticated JWT session
+                 ↓
+       task CRUD + profile
+```
+
+Unauthenticated users cannot enter the dashboard. Authenticated sessions are persisted in the browser until logout or token expiry.
 
 ## Stack
 
 - **Frontend:** Angular 20 + TypeScript + RxJS
+- **Icons/UI:** `@lucide/angular`
 - **Backend:** Spring Boot 3.5.5 + Java 21
 - **API:** Spring MVC REST
 - **Persistence:** Spring Data JPA / Hibernate
-- **Database:** PostgreSQL 16
-- **Security:** Spring Security + BCrypt + HTTP Basic
+- **Database:** PostgreSQL
+- **Security:** Spring Security + BCrypt + JWT
+- **JWT:** JJWT 0.12.6
 - **Local infrastructure:** Docker Compose
-- **JWT:** JJWT dependency/configuration is present for the planned JWT flow, but JWT authentication is not currently wired into the request pipeline.
 
-## Repository
+## Repository structure
 
 ```text
 Oasis-Task-Manager/
 ├── backend/
 │   ├── pom.xml
 │   └── src/main/java/com/oasis/taskmanager/
-│       ├── OasisTaskManagerApplication.java
-│       ├── config/SecurityConfig.java
+│       ├── config/
 │       ├── controller/
-│       │   ├── AuthController.java
-│       │   └── TaskController.java
+│       ├── exception/
 │       ├── model/
-│       │   ├── User.java
-│       │   └── Task.java
-│       └── repository/
-│           ├── UserRepository.java
-│           └── TaskRepository.java
+│       ├── repository/
+│       └── security/
 ├── frontend/
 │   ├── angular.json
 │   ├── package.json
-│   └── src/
-│       ├── main.ts
-│       └── app/
-│           ├── app.component.ts
-│           ├── app.routes.ts
-│           └── dashboard.component.ts
+│   └── src/app/
+│       ├── app.routes.ts
+│       ├── auth.service.ts
+│       ├── auth.guard.ts
+│       ├── guest.guard.ts
+│       ├── auth.interceptor.ts
+│       ├── login.component.ts
+│       ├── register.component.ts
+│       └── dashboard.component.ts
 ├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── BACKEND.md
-│   ├── FRONTEND.md
-│   ├── API.md
-│   ├── DATABASE.md
-│   ├── SECURITY.md
-│   └── DEVELOPMENT.md
 └── docker-compose.yml
 ```
 
-## Architecture
+## Features
 
-```text
-Angular UI
-   │ HTTP
-   ▼
-Spring Boot REST API
-   │
-   ├── Controllers
-   ├── Repositories
-   └── JPA Entities
-   │
-   ▼
-PostgreSQL
-```
+### Authentication
 
-The frontend owns presentation and user interaction. The backend owns persistence, authentication boundaries and task ownership. PostgreSQL is the source of persisted application data.
-
-## Current Features
-
-- User registration
+- registration with name, email and 8+ character password
 - BCrypt password hashing
-- Protected task API
-- Task CRUD
-- Per-user task ownership checks
-- Task title search
-- Due-date ordering
-- Priority
-- Completion state
-- Category
-- Reminder timestamp
-- PostgreSQL persistence
-- Dockerized local PostgreSQL
-- Angular dashboard
+- JWT login
+- protected Angular routes
+- automatic Bearer token injection
+- token expiry handling
+- logout
+- profile name/email update
+- password visibility controls
 
-## Run Locally
+### Task management
 
-### Database
+- create tasks
+- edit tasks
+- delete tasks
+- complete/reopen tasks
+- title search
+- Today, Upcoming and Completed views
+- high-priority filter
+- due-date, priority and title sorting
+- task categories
+- reminder timestamp
+- per-user task ownership
+
+## Run locally
+
+### 1. Start PostgreSQL
 
 ```bash
 docker compose up -d
 ```
 
-Defaults:
+Default development connection:
 
 ```text
 Host: localhost
@@ -104,33 +101,97 @@ User: oasis
 Password: oasis
 ```
 
-### Backend
+### 2. Start Spring Boot
 
-Requires Java 21.
+Windows:
 
-```bash
+```powershell
 cd backend
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
-API: `http://localhost:8080`
+or:
 
-### Frontend
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
-Requires Node.js/npm.
+API:
 
-```bash
+```text
+http://localhost:8080
+```
+
+### 3. Start Angular
+
+In another terminal:
+
+```powershell
 cd frontend
 npm install
 npm start
 ```
 
-UI: `http://localhost:4200`
+UI:
+
+```text
+http://localhost:4200
+```
+
+Angular can choose another local port if 4200 is busy; the backend CORS configuration allows local development ports.
+
+## Authentication architecture
+
+```text
+Angular Login/Register
+        ↓
+AuthService
+        ↓
+POST /api/auth/login or /register
+        ↓
+AuthController
+        ↓
+AuthenticationManager
+        ↓
+DatabaseUserDetailsService
+        ↓
+PostgreSQL User
+        ↓
+BCrypt verification
+        ↓
+JwtService
+        ↓
+JWT returned to browser
+        ↓
+localStorage
+        ↓
+AuthInterceptor
+        ↓
+Authorization: Bearer <JWT>
+        ↓
+JwtAuthenticationFilter
+        ↓
+Spring SecurityContext
+        ↓
+Protected Controller
+```
+
+Task ownership is derived from the authenticated principal rather than from client-supplied user IDs.
 
 ## API
 
+### Public
+
 ```text
-POST   /api/auth/register
+POST /api/auth/register
+POST /api/auth/login
+```
+
+### Authenticated
+
+```text
+GET    /api/auth/me
+PUT    /api/auth/me
 GET    /api/tasks?q=<search>
 POST   /api/tasks
 PUT    /api/tasks/{id}
@@ -139,8 +200,11 @@ DELETE /api/tasks/{id}
 
 See [docs/API.md](docs/API.md).
 
-## Engineering Documentation
+## Documentation
 
+Start here for a full engineering handoff:
+
+- [Implementation / Engineering Handoff](docs/IMPLEMENTATION.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Backend](docs/BACKEND.md)
 - [Frontend](docs/FRONTEND.md)
@@ -149,12 +213,39 @@ See [docs/API.md](docs/API.md).
 - [Security](docs/SECURITY.md)
 - [Development](docs/DEVELOPMENT.md)
 
-## Important Implementation Status
+## Current status
 
-This README documents the code that is actually present. The current authentication implementation uses Spring Security HTTP Basic. Although JJWT dependencies and JWT properties exist, there is no completed JWT login endpoint/filter or Angular Bearer-token interceptor yet.
+### Implemented
 
-Similarly, the current task query searches titles and orders by due date; it is not yet a full priority/status filter engine.
+- [x] Angular frontend
+- [x] Spring Boot backend
+- [x] PostgreSQL persistence
+- [x] User registration
+- [x] User login
+- [x] JWT authentication
+- [x] Protected dashboard routing
+- [x] Authenticated task CRUD
+- [x] Per-user task ownership
+- [x] Validation and API error responses
+- [x] Profile view/update
+- [x] Search
+- [x] Categories
+- [x] Reminder timestamp
+- [x] Filtering/sorting UI
+- [x] Password visibility toggles
 
-These points are intentionally explicit so an engineer can distinguish implemented behavior from planned extensions.
+### Engineering backlog
+
+- [ ] Extract dashboard HTTP/business logic into dedicated Angular services/components
+- [ ] Add backend service layer
+- [ ] Introduce request/response DTOs
+- [ ] Add Flyway/Liquibase migrations
+- [ ] Add automated frontend/backend tests
+- [ ] Add production HTTPS, secrets and restrictive CORS configuration
+- [ ] Add real reminder/notification delivery
+- [ ] Add rate limiting/audit logging
+- [ ] Confirm `Oasisdevcloud` collaborator requirement
+
+These are known improvements, not hidden assumptions. The implementation document explains what is currently implemented and why.
 
 Repository: https://github.com/awesomeakokayo/Oasis-Task-Manager
