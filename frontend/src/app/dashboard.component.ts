@@ -2,6 +2,24 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import {
+  LucideDynamicIcon,
+  LucideHouse,
+  LucideCalendarDays,
+  LucideArrowRight,
+  LucideCheck,
+  LucideSearch,
+  LucideMenu,
+  LucidePlus,
+  LucideListTodo,
+  LucideClock3,
+  LucideCircleCheck,
+  LucideMoreHorizontal,
+  LucideTag,
+  LucideStar,
+  LucideX,
+  LucideTrash2,
+} from '@lucide/angular';
 
 type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -19,19 +37,19 @@ interface Task {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideDynamicIcon],
   template: `
     <div class="app-shell">
       <aside class="sidebar" [class.open]="mobileNavOpen">
         <div class="brand">
-          <div class="brand-mark">O</div>
+          <div class="brand-mark"><svg lucideListTodo [size]="19"></svg></div>
           <div><strong>OASIS</strong><span>Task Manager</span></div>
         </div>
 
         <nav class="nav">
           <button *ngFor="let item of navItems" class="nav-item" [class.active]="view === item.id"
                   (click)="setView(item.id)">
-            <span class="nav-icon">{{ item.icon }}</span>{{ item.label }}
+            <span class="nav-icon"><svg [lucideIcon]="item.icon"></svg></span>{{ item.label }}
             <span *ngIf="item.id === 'today' && todayCount" class="nav-count">{{ todayCount }}</span>
           </button>
         </nav>
@@ -41,11 +59,11 @@ interface Task {
           <button class="category-link" *ngFor="let category of categories" (click)="selectCategory(category)">
             <span class="dot"></span>{{ category }}
           </button>
-          <button class="category-link muted" (click)="openEditor()"><span class="plus">+</span> Add task</button>
+          <button class="category-link muted" (click)="openEditor()"><span class="plus"><svg lucidePlus [size]="14"></svg></span> Add task</button>
         </div>
 
         <div class="focus-card">
-          <span class="focus-icon">✦</span>
+          <span class="focus-icon"><svg lucideStar [size]="16"></svg></span>
           <strong>Keep your focus</strong>
           <p>Finish one important task before moving to the next.</p>
         </div>
@@ -55,9 +73,9 @@ interface Task {
 
       <section class="content">
         <header class="topbar">
-          <button class="mobile-menu" (click)="mobileNavOpen=!mobileNavOpen" aria-label="Open navigation">☰</button>
+          <button class="mobile-menu" (click)="mobileNavOpen=!mobileNavOpen" aria-label="Open navigation"><svg lucideMenu [size]="21"></svg></button>
           <div class="search">
-            <span>⌕</span>
+            <span class="search-icon"><svg lucideSearch [size]="17"></svg></span>
             <input [(ngModel)]="q" (ngModelChange)="load()" placeholder="Search your tasks..." />
             <kbd>/</kbd>
           </div>
@@ -74,22 +92,22 @@ interface Task {
               <h1>{{ greeting }}, Awesome<span>.</span></h1>
               <p class="subtext">Here is what is happening with your tasks.</p>
             </div>
-            <button class="primary-btn" (click)="openEditor()"><span>+</span> New task</button>
+            <button class="primary-btn" (click)="openEditor()"><svg lucidePlus [size]="17"></svg> New task</button>
           </div>
 
           <section class="stats">
             <article class="stat-card">
-              <div class="stat-icon gunmetal">✓</div>
+              <div class="stat-icon gunmetal"><svg lucideListTodo [size]="17"></svg></div>
               <div><span>Total tasks</span><strong>{{ tasks.length }}</strong></div>
               <small>in your workspace</small>
             </article>
             <article class="stat-card">
-              <div class="stat-icon bronze">◷</div>
+              <div class="stat-icon bronze"><svg lucideClock3 [size]="17"></svg></div>
               <div><span>Due today</span><strong>{{ todayCount }}</strong></div>
               <small>need your attention</small>
             </article>
             <article class="stat-card">
-              <div class="stat-icon brick">✓</div>
+              <div class="stat-icon brick"><svg lucideCircleCheck [size]="17"></svg></div>
               <div><span>Completed</span><strong>{{ completedCount }}</strong></div>
               <small>{{ progress }}% of all tasks</small>
             </article>
@@ -123,7 +141,7 @@ interface Task {
               <article class="task-row" *ngFor="let task of visibleTasks; trackBy: trackTask">
                 <button class="check" [class.done]="task.completed" (click)="toggleComplete(task)"
                         [attr.aria-label]="task.completed ? 'Mark task incomplete' : 'Mark task complete'">
-                  <span *ngIf="task.completed">✓</span>
+                  <svg *ngIf="task.completed" lucideCheck [size]="12"></svg>
                 </button>
                 <div class="task-body" [class.completed]="task.completed">
                   <div class="task-title-line">
@@ -134,17 +152,17 @@ interface Task {
                   <p *ngIf="task.description">{{ task.description }}</p>
                   <div class="meta">
                     <span *ngIf="task.category"><i class="mini-dot"></i>{{ task.category }}</span>
-                    <span [class.overdue]="isOverdue(task)" *ngIf="task.dueDate">◷ {{ dueLabel(task) }}</span>
+                    <span [class.overdue]="isOverdue(task)" *ngIf="task.dueDate"><svg lucideClock3 [size]="11"></svg> {{ dueLabel(task) }}</span>
                     <span *ngIf="!task.dueDate" class="muted-meta">No due date</span>
                   </div>
                 </div>
-                <button class="icon-btn" (click)="openEditor(task)" aria-label="Edit task">⋯</button>
+                <button class="icon-btn" (click)="openEditor(task)" aria-label="Edit task"><svg lucideMoreHorizontal [size]="18"></svg></button>
               </article>
             </div>
 
             <ng-template #emptyState>
               <div class="empty">
-                <div class="empty-icon">✓</div>
+                <div class="empty-icon"><svg lucideCircleCheck [size]="24"></svg></div>
                 <h3>{{ q ? 'No matching tasks' : 'Your list is clear' }}</h3>
                 <p>{{ q ? 'Try a different search or filter.' : 'Create a task and turn your plans into progress.' }}</p>
                 <button class="secondary-btn" (click)="openEditor()" *ngIf="!q">Create your first task</button>
@@ -159,7 +177,7 @@ interface Task {
       <section class="modal" (click)="$event.stopPropagation()">
         <div class="modal-head">
           <div><p class="eyebrow">{{ editingId ? 'EDIT TASK' : 'NEW TASK' }}</p><h2>{{ editingId ? 'Update task' : 'Create a task' }}</h2></div>
-          <button class="close-btn" (click)="closeEditor()">×</button>
+          <button class="close-btn" (click)="closeEditor()" aria-label="Close"><svg lucideX [size]="20"></svg></button>
         </div>
 
         <form (ngSubmit)="submitTask()">
@@ -176,7 +194,7 @@ interface Task {
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="danger-btn" *ngIf="editingId" (click)="remove(editingId)">Delete</button>
+            <button type="button" class="danger-btn" *ngIf="editingId" (click)="remove(editingId)"><svg lucideTrash2 [size]="14"></svg> Delete</button>
             <span></span>
             <button type="button" class="ghost-btn" (click)="closeEditor()">Cancel</button>
             <button type="submit" class="primary-btn" [disabled]="saving">{{ saving ? 'Saving...' : (editingId ? 'Save changes' : 'Create task') }}</button>
@@ -195,16 +213,16 @@ interface Task {
     .app-shell{min-height:100vh;background:#f7f7f6;color:#32373b;display:flex}
     .sidebar{width:252px;background:#32373b;color:#fff;padding:25px 16px;display:flex;flex-direction:column;flex:none}
     .brand{display:flex;align-items:center;gap:11px;padding:2px 10px 34px}.brand-mark{width:34px;height:34px;border-radius:10px;background:#f4b860;color:#32373b;display:grid;place-items:center;font-weight:900}.brand strong{display:block;font-size:15px;letter-spacing:.12em}.brand span{display:block;color:#bfc4c5;font-size:11px;margin-top:2px}
-    .nav{display:grid;gap:5px}.nav-item,.category-link{width:100%;border:0;background:transparent;color:#cdd1d1;text-align:left;border-radius:10px;padding:11px 12px;display:flex;align-items:center;gap:11px}.nav-item:hover,.category-link:hover{background:#4a5859;color:#fff}.nav-item.active{background:#f4d6cc;color:#32373b;font-weight:700}.nav-icon{width:18px;text-align:center}.nav-count{margin-left:auto;background:#c83e4d;color:#fff;border-radius:99px;font-size:10px;padding:3px 7px}
-    .sidebar-section{margin-top:30px}.section-label{font-size:10px;letter-spacing:.14em;color:#8e9899;margin:0 12px 9px}.category-link{font-size:13px}.dot,.plus{width:7px;height:7px;border-radius:50%;background:#f4b860;display:inline-block}.plus{background:transparent;width:12px;height:auto;font-size:17px;line-height:10px;color:#aeb6b7}.muted{color:#90999a!important}
-    .focus-card{margin-top:auto;background:#4a5859;border-radius:14px;padding:15px}.focus-icon{color:#f4b860}.focus-card strong{display:block;font-size:12px;margin-top:8px}.focus-card p{color:#bfc4c5;font-size:11px;line-height:1.55;margin:5px 0 0}
+    .nav{display:grid;gap:5px}.nav-item,.category-link{width:100%;border:0;background:transparent;color:#cdd1d1;text-align:left;border-radius:10px;padding:11px 12px;display:flex;align-items:center;gap:11px}.nav-item:hover,.category-link:hover{background:#4a5859;color:#fff}.nav-item.active{background:#f4d6cc;color:#32373b;font-weight:700}.nav-icon{width:18px;height:18px;display:grid;place-items:center}.nav-icon svg{width:17px;height:17px}.nav-count{margin-left:auto;background:#c83e4d;color:#fff;border-radius:99px;font-size:10px;padding:3px 7px}
+    .sidebar-section{margin-top:30px}.section-label{font-size:10px;letter-spacing:.14em;color:#8e9899;margin:0 12px 9px}.category-link{font-size:13px}.dot,.plus{width:7px;height:7px;border-radius:50%;background:#f4b860;display:inline-block}.plus{background:transparent;width:14px;height:14px;display:grid;place-items:center;color:#aeb6b7}.plus svg{width:14px;height:14px}.muted{color:#90999a!important}
+    .focus-card{margin-top:auto;background:#4a5859;border-radius:14px;padding:15px}.focus-icon{color:#f4b860;display:inline-flex}.search-icon{display:inline-flex;flex:none}.primary-btn{display:inline-flex;align-items:center;gap:6px}.focus-card strong{display:block;font-size:12px;margin-top:8px}.focus-card p{color:#bfc4c5;font-size:11px;line-height:1.55;margin:5px 0 0}
     .content{min-width:0;flex:1}.topbar{height:72px;background:#fff;border-bottom:1px solid #e7e4e2;display:flex;align-items:center;justify-content:space-between;padding:0 38px;gap:25px}.search{height:40px;max-width:470px;flex:1;display:flex;align-items:center;gap:9px;color:#899092;background:#f7f7f6;border:1px solid #ebe9e7;border-radius:10px;padding:0 11px}.search input{border:0;outline:0;background:transparent;width:100%;color:#32373b}.search kbd{border:1px solid #ddd8d5;background:#fff;border-radius:5px;padding:1px 6px;font-size:11px;color:#9a9d9d}.profile{display:flex;align-items:center;gap:10px}.avatar{width:35px;height:35px;border-radius:50%;background:#f4d6cc;display:grid;place-items:center;font-weight:800;color:#32373b}.profile-copy strong{display:block;font-size:12px}.profile-copy span{font-size:10px;color:#8c9495}.mobile-menu{display:none}
     .main{max-width:1220px;margin:auto;padding:38px}.welcome{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:28px}.eyebrow{font-size:10px;letter-spacing:.14em;color:#8b9293;font-weight:700;margin:0 0 8px;text-transform:uppercase}.welcome h1{font-size:30px;letter-spacing:-.03em;margin:0}.welcome h1 span{color:#c83e4d}.subtext{color:#899092;font-size:13px;margin:7px 0 0}.primary-btn{border:0;background:#c83e4d;color:#fff;border-radius:9px;padding:11px 16px;font-weight:700;box-shadow:0 5px 14px rgba(200,62,77,.16)}.primary-btn:hover{filter:brightness(.95)}.primary-btn:disabled{opacity:.55;cursor:wait}.primary-btn span{font-size:18px;vertical-align:-1px;margin-right:4px}
-    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:26px}.stat-card{background:#fff;border:1px solid #ebe8e5;border-radius:13px;padding:17px;min-height:112px;position:relative}.stat-card>div:not(.progress-head){display:inline-flex;vertical-align:middle}.stat-icon{width:34px;height:34px;border-radius:9px;align-items:center;justify-content:center;margin-right:9px;font-weight:800}.gunmetal{background:#e7e9e9;color:#32373b}.bronze{background:#fff0d9;color:#a86b12}.brick{background:#fae1e4;color:#c83e4d}.stat-card span{display:block;color:#858d8e;font-size:10px}.stat-card strong{font-size:22px;line-height:1.4}.stat-card small{display:block;color:#a0a6a7;font-size:9px;margin-top:10px}.progress-card{padding:18px}.progress-head{display:flex;justify-content:space-between!important;align-items:center}.progress-head strong{font-size:19px}.progress-track{height:7px;background:#eceeed;border-radius:99px;margin-top:15px;overflow:hidden}.progress-fill{height:100%;background:#f4b860;border-radius:99px;transition:width .3s ease}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:26px}.stat-card{background:#fff;border:1px solid #ebe8e5;border-radius:13px;padding:17px;min-height:112px;position:relative}.stat-card>div:not(.progress-head){display:inline-flex;vertical-align:middle}.stat-icon{width:34px;height:34px;border-radius:9px;align-items:center;justify-content:center;margin-right:9px;font-weight:800;display:inline-flex}.stat-icon svg{width:17px;height:17px}.gunmetal{background:#e7e9e9;color:#32373b}.bronze{background:#fff0d9;color:#a86b12}.brick{background:#fae1e4;color:#c83e4d}.stat-card span{display:block;color:#858d8e;font-size:10px}.stat-card strong{font-size:22px;line-height:1.4}.stat-card small{display:block;color:#a0a6a7;font-size:9px;margin-top:10px}.progress-card{padding:18px}.progress-head{display:flex;justify-content:space-between!important;align-items:center}.progress-head strong{font-size:19px}.progress-track{height:7px;background:#eceeed;border-radius:99px;margin-top:15px;overflow:hidden}.progress-fill{height:100%;background:#f4b860;border-radius:99px;transition:width .3s ease}
     .task-panel{background:#fff;border:1px solid #ebe8e5;border-radius:15px;overflow:hidden}.panel-head{padding:19px 21px;border-bottom:1px solid #efedeb;display:flex;justify-content:space-between;align-items:center;gap:15px}.panel-head h2{font-size:16px;margin:0 0 3px}.panel-head>div>span{font-size:10px;color:#92999a}.toolbar{display:flex;gap:8px;align-items:center}.segmented{background:#f5f5f4;border-radius:8px;padding:3px;display:flex}.segmented button,.toolbar select{border:0;background:transparent;color:#7b8384;font-size:10px;padding:7px 9px;border-radius:6px}.segmented button.active{background:#fff;color:#32373b;box-shadow:0 1px 4px rgba(0,0,0,.07);font-weight:700}.toolbar select{border:1px solid #e6e3e1;background:#fff}
-    .task-list{padding:6px 21px}.task-row{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid #f0eeec}.task-row:last-child{border-bottom:0}.check{width:20px;height:20px;border:1.5px solid #b8bdbd;background:#fff;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-size:11px}.check.done{background:#c83e4d;border-color:#c83e4d}.task-body{min-width:0;flex:1}.task-title-line{display:flex;align-items:center;gap:9px}.task-title-line h3{font-size:13px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.task-body.completed h3{text-decoration:line-through;color:#969c9d}.task-body>p{font-size:11px;color:#8a9293;margin:5px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.priority{font-size:8px;font-weight:800;padding:3px 6px;border-radius:99px;letter-spacing:.04em}.priority.high{background:#fae1e4;color:#c83e4d}.priority.medium{background:#fff0d9;color:#9a681d}.priority.low{background:#e8eeee;color:#4a5859}.meta{display:flex;gap:14px;color:#8b9394;font-size:9px}.mini-dot{width:6px;height:6px;background:#f4b860;border-radius:50%;display:inline-block;margin-right:5px}.overdue{color:#c83e4d}.muted-meta{color:#afb3b4}.icon-btn,.close-btn{border:0;background:transparent;color:#8f9697;font-size:20px;padding:5px}.icon-btn:hover{color:#32373b}
-    .empty{text-align:center;padding:62px 20px}.empty-icon{width:50px;height:50px;margin:auto;border-radius:50%;display:grid;place-items:center;background:#f4d6cc;color:#c83e4d;font-weight:800}.empty h3{margin:15px 0 5px;font-size:15px}.empty p{color:#969c9d;font-size:11px;margin:0 0 17px}.secondary-btn{border:1px solid #ddd8d5;background:#fff;border-radius:8px;padding:9px 13px;font-weight:700;color:#4a5859}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(30,34,36,.48);display:grid;place-items:center;padding:20px;z-index:20}.modal{background:#fff;border-radius:16px;width:min(570px,100%);max-height:92vh;overflow:auto;box-shadow:0 25px 70px rgba(0,0,0,.22);padding:25px}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.modal-head h2{margin:0;font-size:21px}.close-btn{font-size:25px;line-height:1}.modal label{display:block;font-size:10px;font-weight:800;color:#596162;margin-bottom:15px}.modal input,.modal textarea,.modal select{width:100%;margin-top:7px;border:1px solid #dedbd8;border-radius:8px;padding:10px 11px;outline:0;background:#fff;color:#32373b;font-size:12px}.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:#f4b860;box-shadow:0 0 0 3px rgba(244,184,96,.15)}.modal textarea{resize:vertical}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.modal-actions{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #eeeae7;padding-top:18px;margin-top:4px}.ghost-btn,.danger-btn{border:0;background:#f4f4f2;color:#4a5859;border-radius:8px;padding:10px 13px;font-weight:700;font-size:11px}.danger-btn{background:#fae1e4;color:#c83e4d}.toast{position:fixed;right:24px;bottom:24px;background:#32373b;color:#fff;border-radius:9px;padding:12px 15px;font-size:11px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:30}.mobile-backdrop{display:none}
+    .task-list{padding:6px 21px}.task-row{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid #f0eeec}.task-row:last-child{border-bottom:0}.check{width:20px;height:20px;border:1.5px solid #b8bdbd;background:#fff;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-size:11px}.check.done{background:#c83e4d;border-color:#c83e4d}.check svg{display:block}.task-body{min-width:0;flex:1}.task-title-line{display:flex;align-items:center;gap:9px}.task-title-line h3{font-size:13px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.task-body.completed h3{text-decoration:line-through;color:#969c9d}.task-body>p{font-size:11px;color:#8a9293;margin:5px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.priority{font-size:8px;font-weight:800;padding:3px 6px;border-radius:99px;letter-spacing:.04em}.priority.high{background:#fae1e4;color:#c83e4d}.priority.medium{background:#fff0d9;color:#9a681d}.priority.low{background:#e8eeee;color:#4a5859}.meta{display:flex;gap:14px;color:#8b9394;font-size:9px}.mini-dot{width:6px;height:6px;background:#f4b860;border-radius:50%;display:inline-block;margin-right:5px}.overdue{color:#c83e4d}.muted-meta{color:#afb3b4}.icon-btn,.close-btn{border:0;background:transparent;color:#8f9697;font-size:20px;padding:5px}.icon-btn:hover{color:#32373b}.icon-btn svg{display:block}
+    .empty{text-align:center;padding:62px 20px}.empty-icon{width:50px;height:50px;margin:auto;border-radius:50%;display:grid;place-items:center;background:#f4d6cc;color:#c83e4d;font-weight:800}.empty-icon svg{width:24px;height:24px}.empty h3{margin:15px 0 5px;font-size:15px}.empty p{color:#969c9d;font-size:11px;margin:0 0 17px}.secondary-btn{border:1px solid #ddd8d5;background:#fff;border-radius:8px;padding:9px 13px;font-weight:700;color:#4a5859}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(30,34,36,.48);display:grid;place-items:center;padding:20px;z-index:20}.modal{background:#fff;border-radius:16px;width:min(570px,100%);max-height:92vh;overflow:auto;box-shadow:0 25px 70px rgba(0,0,0,.22);padding:25px}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.modal-head h2{margin:0;font-size:21px}.close-btn{font-size:25px;line-height:1;display:grid;place-items:center}.modal label{display:block;font-size:10px;font-weight:800;color:#596162;margin-bottom:15px}.modal input,.modal textarea,.modal select{width:100%;margin-top:7px;border:1px solid #dedbd8;border-radius:8px;padding:10px 11px;outline:0;background:#fff;color:#32373b;font-size:12px}.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:#f4b860;box-shadow:0 0 0 3px rgba(244,184,96,.15)}.modal textarea{resize:vertical}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.modal-actions{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #eeeae7;padding-top:18px;margin-top:4px}.ghost-btn,.danger-btn{border:0;background:#f4f4f2;color:#4a5859;border-radius:8px;padding:10px 13px;font-weight:700;font-size:11px}.danger-btn{background:#fae1e4;color:#c83e4d;display:inline-flex;align-items:center;gap:6px}.toast{position:fixed;right:24px;bottom:24px;background:#32373b;color:#fff;border-radius:9px;padding:12px 15px;font-size:11px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:30}.mobile-backdrop{display:none}
     @media(max-width:900px){.sidebar{position:fixed;left:-270px;top:0;bottom:0;z-index:15;transition:left .2s}.sidebar.open{left:0}.mobile-backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:14}.mobile-menu{display:block;border:0;background:transparent;font-size:21px;color:#32373b}.topbar{padding:0 18px}.stats{grid-template-columns:1fr 1fr}.main{padding:25px 18px}}
     @media(max-width:620px){.profile-copy{display:none}.search{max-width:none}.welcome{align-items:flex-start;flex-direction:column}.welcome h1{font-size:25px}.stats{grid-template-columns:1fr 1fr}.stat-card{min-height:100px}.panel-head{align-items:flex-start;flex-direction:column}.toolbar{width:100%;flex-wrap:wrap}.task-row{gap:9px}.task-title-line{align-items:flex-start;flex-direction:column;gap:4px}.form-grid{grid-template-columns:1fr}.modal{padding:19px}.modal-actions{grid-template-columns:1fr 1fr}.modal-actions span{display:none}.danger-btn{grid-column:1 / -1}.modal-actions .primary-btn{width:100%}}
   `]
@@ -227,10 +245,10 @@ export class DashboardComponent implements OnInit {
   today = new Date();
 
   navItems = [
-    { id: 'overview', label: 'Overview', icon: '⌂' },
-    { id: 'today', label: 'Today', icon: '◷' },
-    { id: 'upcoming', label: 'Upcoming', icon: '→' },
-    { id: 'completed', label: 'Completed', icon: '✓' }
+    { id: 'overview', label: 'Overview', icon: LucideHouse },
+    { id: 'today', label: 'Today', icon: LucideCalendarDays },
+    { id: 'upcoming', label: 'Upcoming', icon: LucideArrowRight },
+    { id: 'completed', label: 'Completed', icon: LucideCircleCheck }
   ];
 
   ngOnInit(): void { this.load(); }
