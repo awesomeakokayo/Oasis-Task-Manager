@@ -9,6 +9,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -53,7 +54,13 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+
+        // Angular's dev server may use 4200 or an automatically selected port.
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
+        ));
+
         configuration.setAllowedMethods(List.of(
                 HttpMethod.GET.name(),
                 HttpMethod.POST.name(),
@@ -61,11 +68,13 @@ public class SecurityConfig {
                 HttpMethod.DELETE.name(),
                 HttpMethod.OPTIONS.name()
         ));
+
         configuration.setAllowedHeaders(List.of(
                 "Authorization",
                 "Content-Type",
                 "Accept"
         ));
+
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
@@ -79,11 +88,11 @@ public class SecurityConfig {
         http
             .csrf(c -> c.disable())
             .cors(c -> {})
-            .sessionManagement(s -> s.sessionCreationPolicy(
-                    org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
             .authorizeHttpRequests(a -> a
                 .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
             )
