@@ -16,8 +16,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.filter.CorsFilter;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -86,18 +84,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    FilterRegistrationBean<CorsFilter> corsFilter(CorsConfigurationSource source) {
-        FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new CorsFilter(source));
-        registration.setOrder(Integer.MIN_VALUE);
-        return registration;
-    }
-
-    @Bean
     SecurityFilterChain filterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         http
             .csrf(c -> c.disable())
-            .cors(c -> {})
+            .cors(c -> c.configurationSource(corsConfigurationSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
             .authorizeHttpRequests(a -> a
