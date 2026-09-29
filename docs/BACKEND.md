@@ -6,91 +6,195 @@
 - Spring Boot 3.5.5
 - Spring Web
 - Spring Security
-- Spring Data JPA
-- PostgreSQL driver
+- Spring Data JPA / Hibernate
+- PostgreSQL
 - Bean Validation
-- JJWT dependencies
+- JJWT 0.12.6
 
-Entry point: `OasisTaskManagerApplication.java`.
+Entry point:
+
+```text
+backend/src/main/java/com/oasis/taskmanager/OasisTaskManagerApplication.java
+```
+
+## Backend startup
+
+From `backend/`:
+
+```powershell
+mvn spring-boot:run
+```
+
+or:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Default API:
+
+```text
+http://localhost:8080
+```
 
 ## Configuration
 
-`backend/src/main/resources/application.properties` configures:
+`backend/src/main/resources/application.properties` contains the local PostgreSQL connection, JPA settings and JWT configuration.
 
-- Port `8080`
-- PostgreSQL connection
-- Hibernate `ddl-auto=update`
-- JWT placeholder properties
+JWT secret:
 
-Use environment variables and migrations for production.
+```properties
+app.jwt.secret=${JWT_SECRET:development-default}
+```
+
+Use `JWT_SECRET` in real environments.
 
 ## SecurityConfig
 
-Current rules:
+The application is stateless.
 
 ```text
-/api/auth/**  → permitted
-everything else → authenticated
+POST /api/auth/register → public
+POST /api/auth/login    → public
+OPTIONS /**             → public
+everything else         → authenticated
 ```
 
-BCrypt is used as the password encoder. HTTP Basic is currently enabled.
+CORS allows local Angular origins during development.
+
+The JWT filter runs before `UsernamePasswordAuthenticationFilter`.
+
+HTTP Basic and form login are disabled.
+
+## DatabaseUserDetailsService
+
+`DatabaseUserDetailsService` adapts the application's `UserRepository` to Spring Security's `UserDetailsService`.
+
+Lookup:
+
+```text
+email → UserRepository.findByEmail()
+      → Spring UserDetails
+```
+
+This is what allows `AuthenticationManager` to verify login credentials against PostgreSQL.
+
+## JwtService
+
+Responsibilities:
+
+- generate JWT with email as subject
+- set issued-at time
+- set expiration
+- sign token with configured HMAC key
+- parse/verify signed tokens
+- validate subject and expiration
+
+## JwtAuthenticationFilter
+
+For every request containing:
+
+```http
+Authorization: Bearer <token>
+```
+
+the filter:
+
+1. extracts the token
+2. extracts the email
+3. loads the user
+4. validates the token
+5. creates an authenticated Spring Security token
+6. places it in the SecurityContext
+
+Invalid tokens are left unauthenticated and are rejected by the security rules.
 
 ## AuthController
 
-`POST /api/auth/register`:
+### `POST /api/auth/register`
 
-1. Validates name/email/password presence.
-2. Requires an 8+ character password.
-3. Lowercases email.
-4. Rejects an existing email with 409.
-5. Hashes the password using BCrypt.
-6. Saves the User.
-7. Returns 201.
+- validates request
+- normalizes email
+- checks duplicate email
+- BCrypt-hashes password
+- saves User
+- immediately returns a JWT
+
+### `POST /api/auth/login`
+
+- normalizes email
+- authenticates email/password through Spring Security
+- loads User
+- returns a fresh JWT
+
+### `GET /api/auth/me`
+
+Returns the authenticated user's name and email.
+
+### `PUT /api/auth/me`
+
+Updates name/email and returns a new JWT reflecting the current email.
 
 ## TaskController
 
-Routes:
+### `GET /api/tasks`
 
-- `GET /api/tasks`
-- `POST /api/tasks`
-- `PUT /api/tasks/{id}`
-- `DELETE /api/tasks/{id}`
+Optional query parameter:
 
-The authenticated principal's email is resolved to a User. Create assigns that User to the new task. Update/delete first require a task belonging to that User.
+```text
+?q=meeting
+```
 
-## Repositories
+Results are scoped to the authenticated user and ordered by due date.
 
-`UserRepository` provides `findByEmail`.
+### `POST /api/tasks`
 
-`TaskRepository` provides:
+The backend assigns:
 
-- `search(uid, q)`: current user's tasks, optional title search, due-date ascending.
-- `findByIdAndUserId(id, userId)`: ownership-aware lookup.
+```text
+task.user = authenticated user
+```
 
-## Entities
+The client cannot choose the owner.
 
-### User
+### `PUT /api/tasks/{id}`
 
-`id, name, email, password, tasks`
+The task is first resolved with an ownership-aware lookup. Then task fields are updated.
 
-Email is unique.
+### `DELETE /api/tasks/{id}`
 
-### Task
+The same ownership rule applies before deletion.
 
-`id, title, description, dueDate, priority, completed, category, reminderAt, user`
+## Validation
 
-Priority values: `LOW`, `MEDIUM`, `HIGH`.
+Task fields:
 
-## Recommended next steps
+- title: required, maximum 120 characters
+- description: maximum 4000 characters
+- priority: `LOW`, `MEDIUM`, `HIGH`
 
-For a production/assessment-complete backend:
+Registration fields:
 
-1. Add JWT service.
-2. Add login endpoint.
-3. Add JWT request filter.
-4. Add DTOs and validation.
-5. Add service layer for business logic.
-6. Add global exception handling.
-7. Add priority/status filters.
-8. Add tests.
-9. Move secrets to environment variables.
+- name: required, max 80
+- email: valid email
+- password: 8–100 characters
+
+## Exception handling
+
+`ApiExceptionHandler` translates common failures into predictable JSON responses:
+
+```json
+{"message":"Invalid email or password."}
+```
+
+Typical statuses:
+
+- 400 validation error
+- 401 invalid authentication
+- 409 duplicate/conflicting data
+
+## Current backend limitation
+
+There is no service layer yet. Controllers call repositories directly. That is acceptable for the current assessment-sized implementation, but business logic should move into services before significant growth.
+
+There are also no automated backend tests in the current implementation.
