@@ -1,0 +1,3 @@
+package com.oasis.taskmanager.repository;
+import org.springframework.data.jpa.repository.*; import org.springframework.data.repository.query.Param; import com.oasis.taskmanager.model.Task; import java.util.*;
+public interface TaskRepository extends JpaRepository<Task,Long>{ @Query("select t from Task t where t.user.id=:uid and (:q='' or lower(t.title) like lower(concat('%',:q,'%'))) order by t.dueDate asc") List<Task> search(@Param("uid")Long uid,@Param("q")String q); Optional<Task> findByIdAndUserId(Long id,Long userId); }

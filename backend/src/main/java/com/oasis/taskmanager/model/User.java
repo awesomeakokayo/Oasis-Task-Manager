@@ -1,0 +1,3 @@
+package com.oasis.taskmanager.model;
+import jakarta.persistence.*; import java.util.*;
+@Entity @Table(name="users") public class User { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) public Long id; @Column(nullable=false) public String name; @Column(nullable=false,unique=true) public String email; @Column(nullable=false) public String password; @OneToMany(mappedBy="user",cascade=CascadeType.ALL,orphanRemoval=true) public List<Task> tasks=new ArrayList<>(); }
