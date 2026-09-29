@@ -1,78 +1,119 @@
 # Security Guide
 
-## Current boundary
+## Security model
 
-The backend is the security authority. The browser is untrusted.
+The browser is treated as untrusted.
 
-Current route policy:
-
-```text
-/api/auth/**       PUBLIC
-all other routes  PROTECTED
-```
-
-## Passwords
-
-Registration uses BCrypt:
+Authentication is stateless JWT-based:
 
 ```text
-raw password → BCrypt → stored hash
+email + password
+    ↓
+Spring AuthenticationManager
+    ↓
+PostgreSQL User
+    ↓
+BCrypt verification
+    ↓
+JWT
+    ↓
+Angular localStorage
+    ↓
+Bearer token on protected requests
 ```
 
-The raw password is not persisted.
+## Password storage
+
+Passwords are hashed using BCrypt before persistence.
+
+Raw passwords are not stored in PostgreSQL.
+
+## Authentication endpoints
+
+Public:
+
+```text
+POST /api/auth/register
+POST /api/auth/login
+```
+
+Protected:
+
+```text
+GET/PUT /api/auth/me
+all /api/tasks endpoints
+```
+
+## JWT validation
+
+`JwtAuthenticationFilter` validates:
+
+- token signature
+- token subject/email
+- token expiration
+
+A valid token creates the Spring Security authenticated principal.
 
 ## Task authorization
 
-For update/delete:
+Authorization is based on ownership.
+
+For example:
 
 ```text
-authenticated user + task ID
+PUT /api/tasks/42
         ↓
-findByIdAndUserId()
+authenticated user ID = 7
         ↓
-task is returned only when ownership matches
+findByIdAndUserId(42, 7)
+        ↓
+update only when both match
 ```
 
-Do not replace this with a plain `findById` and client-side ownership check.
+This prevents a user from changing another user's task merely by knowing its ID.
+
+## CORS
+
+Development CORS accepts local:
+
+```text
+http://localhost:<port>
+http://127.0.0.1:<port>
+```
+
+This is intentionally broader for local Angular development. Production should replace this with exact trusted frontend origins.
 
 ## CSRF
 
-CSRF is disabled in the current REST API configuration. Revisit this if cookie-based browser sessions are introduced.
+CSRF is disabled because the current API uses stateless Bearer-token authentication rather than browser cookies.
+
+Revisit this architecture if authentication changes to cookie-based sessions.
 
 ## Secrets
 
-Current database credentials and JWT secret are development placeholders. They must not be reused in production.
+Do not use development defaults in production.
 
-Use environment variables/secret management for:
+The JWT configuration supports:
 
 ```text
-SPRING_DATASOURCE_URL
-SPRING_DATASOURCE_USERNAME
-SPRING_DATASOURCE_PASSWORD
-APP_JWT_SECRET
+JWT_SECRET
 ```
 
-## JWT status
+Production should also move PostgreSQL credentials into deployment secrets/environment configuration.
 
-JJWT dependencies and properties exist, but JWT is not currently connected to authentication.
+## Current security backlog
 
-A complete implementation needs:
+- HTTPS everywhere in deployment
+- exact production CORS allowlist
+- secret management
+- auth rate limiting
+- account lockout/abuse protection
+- audit/security logging
+- automated security tests
+- refresh-token/session strategy if long-lived sessions are required
+- database migrations
+- DTOs so entities are never accidentally exposed through API responses
 
-1. login endpoint
-2. credential verification
-3. token creation
-4. token validation
-5. request filter
-6. SecurityContext population
-7. Angular Bearer interceptor
-8. expiry handling
+## Important implementation note
 
-## Further hardening
-
-- DTO validation
-- global error responses without internal details
-- rate limiting on auth endpoints
-- restrictive CORS
-- HTTPS
-- audit logging
-- security tests
+`Task.user` is marked `@JsonIgnore` so the lazy User relationship is not serialized when a Task is returned. This avoids leaking user persistence structure and prevents lazy-relationship serialization failures.
