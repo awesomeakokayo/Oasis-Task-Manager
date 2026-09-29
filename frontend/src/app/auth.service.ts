@@ -32,7 +32,12 @@ export class AuthService {
     if (!this.session?.token) return false;
 
     try {
-      const payload = JSON.parse(atob(this.session.token.split('.')[1]));
+      const encodedPayload = this.session.token.split('.')[1];
+      const base64Payload = encodedPayload
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(Math.ceil(encodedPayload.length / 4) * 4, '=');
+      const payload = JSON.parse(atob(base64Payload));
       if (payload.exp && payload.exp * 1000 <= Date.now()) {
         this.logout();
         return false;
