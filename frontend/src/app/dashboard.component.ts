@@ -37,7 +37,25 @@ interface Task {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [\n    CommonModule,\n    FormsModule,\n    LucideDynamicIcon,\n    LucideHouse,\n    LucideCalendarDays,\n    LucideArrowRight,\n    LucideCheck,\n    LucideSearch,\n    LucideMenu,\n    LucidePlus,\n    LucideListTodo,\n    LucideClock3,\n    LucideCircleCheck,\n    LucideMoreHorizontal,\n    LucideStar,\n    LucideX,\n    LucideTrash2,\n  ],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LucideDynamicIcon,
+    LucideHouse,
+    LucideCalendarDays,
+    LucideArrowRight,
+    LucideCheck,
+    LucideSearch,
+    LucideMenu,
+    LucidePlus,
+    LucideListTodo,
+    LucideClock3,
+    LucideCircleCheck,
+    LucideMoreHorizontal,
+    LucideStar,
+    LucideX,
+    LucideTrash2,
+  ],
   template: `
     <div class="app-shell">
       <aside class="sidebar" [class.open]="mobileNavOpen">
