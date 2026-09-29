@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { LucideArrowRight, LucideLockKeyhole, LucideMail, LucideShieldCheck, LucideUserRound } from '@lucide/angular';
+import { LucideArrowRight, LucideEye, LucideEyeOff, LucideLockKeyhole, LucideMail, LucideShieldCheck, LucideUserRound } from '@lucide/angular';
 import { AuthService } from './auth.service';
 
 @Component({
@@ -13,6 +13,8 @@ import { AuthService } from './auth.service';
     FormsModule,
     RouterLink,
     LucideArrowRight,
+    LucideEye,
+    LucideEyeOff,
     LucideLockKeyhole,
     LucideMail,
     LucideShieldCheck,
@@ -86,13 +88,19 @@ import { AuthService } from './auth.service';
               <div class="input-wrap">
                 <svg lucideLockKeyhole width="17" height="17"></svg>
                 <input
-                  type="password"
+                  [type]="showPassword ? 'text' : 'password'"
                   name="password"
                   [(ngModel)]="password"
                   required
                   minlength="8"
                   autocomplete="new-password"
                   placeholder="At least 8 characters">
+                <button class="password-toggle" type="button" (click)="showPassword = !showPassword"
+                        [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+                        [attr.title]="showPassword ? 'Hide password' : 'Show password'">
+                  <svg *ngIf="showPassword" lucideEyeOff width="16" height="16"></svg>
+                  <svg *ngIf="!showPassword" lucideEye width="16" height="16"></svg>
+                </button>
               </div>
             </label>
 
@@ -101,13 +109,19 @@ import { AuthService } from './auth.service';
               <div class="input-wrap">
                 <svg lucideLockKeyhole width="17" height="17"></svg>
                 <input
-                  type="password"
+                  [type]="showConfirmPassword ? 'text' : 'password'"
                   name="confirmPassword"
                   [(ngModel)]="confirmPassword"
                   required
                   minlength="8"
                   autocomplete="new-password"
                   placeholder="Repeat your password">
+                <button class="password-toggle" type="button" (click)="showConfirmPassword = !showConfirmPassword"
+                        [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'"
+                        [attr.title]="showConfirmPassword ? 'Hide password' : 'Show password'">
+                  <svg *ngIf="showConfirmPassword" lucideEyeOff width="16" height="16"></svg>
+                  <svg *ngIf="!showConfirmPassword" lucideEye width="16" height="16"></svg>
+                </button>
               </div>
             </label>
 
@@ -136,7 +150,7 @@ import { AuthService } from './auth.service';
     .auth-content{display:grid;place-items:center;padding:30px}
     .auth-card{width:min(440px,100%);background:#fff;border:1px solid #e7e3e0;border-radius:18px;padding:32px 34px;box-shadow:0 18px 55px rgba(50,55,59,.07)}
     .card-heading{margin-bottom:24px}.card-heading h2{font-size:25px;letter-spacing:-.035em;margin:8px 0 6px}.card-heading p{color:#8a9293;font-size:12px;margin:0;line-height:1.6}
-    form{display:grid;gap:14px}label{display:grid;gap:7px;color:#596162;font-size:11px;font-weight:800}.input-wrap{display:flex;align-items:center;gap:9px;border:1px solid #ddd9d6;border-radius:10px;padding:0 12px;background:#fff;transition:.18s}.input-wrap:focus-within{border-color:#f4b860;box-shadow:0 0 0 3px rgba(244,184,96,.14)}.input-wrap svg{color:#919899;flex:none}.input-wrap input{border:0;outline:0;width:100%;padding:11px 0;background:transparent;color:#32373b;font-size:12px}
+    form{display:grid;gap:14px}label{display:grid;gap:7px;color:#596162;font-size:11px;font-weight:800}.input-wrap{display:flex;align-items:center;gap:9px;border:1px solid #ddd9d6;border-radius:10px;padding:0 12px;background:#fff;transition:.18s}.input-wrap:focus-within{border-color:#f4b860;box-shadow:0 0 0 3px rgba(244,184,96,.14)}.input-wrap svg{color:#919899;flex:none}.password-toggle{border:0;background:transparent;color:#858d8e;padding:4px;display:grid;place-items:center;border-radius:6px}.password-toggle:hover{background:#f2f1ef;color:#32373b}.input-wrap input{border:0;outline:0;width:100%;padding:11px 0;background:transparent;color:#32373b;font-size:12px}
     .error{padding:10px 11px;border-radius:9px;background:#fae1e4;color:#b53140;font-size:11px;line-height:1.45}
     .submit-btn{border:0;border-radius:10px;background:#c83e4d;color:#fff;padding:13px 15px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:800;box-shadow:0 8px 20px rgba(200,62,77,.17);transition:.18s}.submit-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(.96)}.submit-btn:disabled{opacity:.5;cursor:not-allowed}
     .switch{text-align:center;color:#8b9394;font-size:11px;margin:21px 0 0}.switch a{color:#c83e4d;font-weight:800;text-decoration:none}.switch a:hover{text-decoration:underline}
@@ -150,7 +164,9 @@ export class RegisterComponent {
   name = '';
   email = '';
   password = '';
+  showPassword = false;
   confirmPassword = '';
+  showConfirmPassword = false;
   loading = false;
   error = '';
 
