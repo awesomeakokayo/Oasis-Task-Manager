@@ -1,31 +1,45 @@
 # Database Guide
 
-## PostgreSQL
+## Local PostgreSQL
 
-Docker Compose runs PostgreSQL 16:
+Docker Compose supplies the development PostgreSQL instance.
+
+Default local connection:
 
 ```text
-database: oasis_tasks
-user: oasis
-password: oasis
-port: 5432
+Host: localhost
+Port: 5432
+Database: oasis_tasks
+User: oasis
+Password: oasis
+```
+
+Start it:
+
+```bash
+docker compose up -d
 ```
 
 ## ORM
 
-Spring Data JPA + Hibernate maps the Java entities to PostgreSQL.
+Spring Data JPA + Hibernate maps:
 
-Development uses:
+```text
+User → users
+Task → task table
+```
+
+Development currently uses:
 
 ```properties
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-Production should use versioned migrations such as Flyway or Liquibase.
+This is convenient for assessment development, not ideal for production schema management.
 
 ## User
 
-The User entity contains:
+Fields:
 
 ```text
 id
@@ -37,9 +51,11 @@ tasks
 
 Email is unique.
 
+Passwords contain BCrypt hashes, not plaintext values.
+
 ## Task
 
-The Task entity contains:
+Fields:
 
 ```text
 id
@@ -53,29 +69,59 @@ reminderAt
 user
 ```
 
-The relationship is:
+Relationship:
 
 ```text
-users 1 ───────── * tasks
+User 1 ───────── * Task
 ```
 
-Each task has a required `ManyToOne` relationship to User.
+Each Task requires an owner.
 
-## Ownership
+## Ownership query
 
-The key authorization-aware query is:
+The repository exposes:
 
 ```text
 findByIdAndUserId(taskId, userId)
 ```
 
-This prevents a user from updating/deleting a task solely by guessing its ID.
+This is a key part of the security model.
 
-## Production recommendations
+## Search
 
-- Move credentials to environment variables.
-- Use database migrations.
-- Add indexes for frequent searches.
-- Add explicit constraints for business rules.
-- Use separate environments/databases.
-- Back up production data.
+The current repository query:
+
+- limits results to one user
+- optionally searches title text
+- orders by due date ascending
+
+Priority/status filtering currently happens in the dashboard for the loaded result set.
+
+## Production migration plan
+
+Move from Hibernate schema updates to Flyway or Liquibase.
+
+Then add explicit migrations for:
+
+- users
+- tasks
+- indexes
+- constraints
+
+Useful future indexes include:
+
+```text
+tasks(user_id)
+tasks(user_id, due_date)
+users(email)
+```
+
+## Data safety
+
+Production should have:
+
+- backups
+- restore testing
+- environment separation
+- least-privilege database credentials
+- monitoring for failed connections
