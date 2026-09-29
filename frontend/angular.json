@@ -1,1 +1,38 @@
-{"$schema":"./node_modules/@angular/cli/lib/config/schema.json","version":1,"projects":{"oasis":{"projectType":"application","root":"","sourceRoot":"src","prefix":"app","architect":{"build":{"builder":"@angular-devkit/build-angular:application","options":{"outputPath":"dist/oasis","index":"src/index.html","browser":"src/main.ts","polyfills":["zone.js"],"tsConfig":"tsconfig.app.json","styles":["src/styles.css"]}},"serve":{"builder":"@angular-devkit/build-angular:dev-server","options":{"buildTarget":"oasis:build"}}}}}}
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "projects": {
+    "oasis": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:application",
+          "options": {
+            "outputPath": "dist/oasis",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "tsconfig.app.json",
+            "styles": [
+              "src/styles.css"
+            ]
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "oasis:build"
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "9efbc357-f33b-48c1-b977-9cacfee7a299"
+  }
+}
