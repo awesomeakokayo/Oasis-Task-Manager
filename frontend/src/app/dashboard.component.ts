@@ -204,7 +204,7 @@ interface Task {
         </div>
 
         <form (ngSubmit)="submitTask()">
-          <label>Task title<input [(ngModel)]="draft.title" name="title" required maxlength="120" placeholder="What needs to be done?" autofocus></label>
+          <label>Task title<input [(ngModel)]="draft.title" name="title" required maxlength="120" placeholder="What needs to be done?"></label>
           <label>Description<textarea [(ngModel)]="draft.description" name="description" rows="3" placeholder="Add a little context..."></textarea></label>
 
           <div class="form-grid">
