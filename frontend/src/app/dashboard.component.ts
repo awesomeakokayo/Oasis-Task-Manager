@@ -318,7 +318,8 @@ export class DashboardComponent implements OnInit {
       reminderAt: this.draft.reminderAt || null
     };
 
-    const request = this.editingId
+    const wasEditing = !!this.editingId;
+    const request = wasEditing
       ? this.http.put(this.api + '/' + this.editingId, payload)
       : this.http.post(this.api, payload);
 
@@ -327,7 +328,7 @@ export class DashboardComponent implements OnInit {
         this.saving = false;
         this.closeEditor();
         this.load();
-        this.showToast(this.editingId ? 'Task updated' : 'Task created');
+        this.showToast(wasEditing ? 'Task updated' : 'Task created');
       },
       error: () => {
         this.saving = false;
