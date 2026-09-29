@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { AuthService } from './auth.service';
 import {
   LucideDynamicIcon,
   LucideHouse,
@@ -15,10 +17,11 @@ import {
   LucideClock3,
   LucideCircleCheck,
   LucideMoreHorizontal,
-  LucideTag,
   LucideStar,
   LucideX,
   LucideTrash2,
+  LucideLogOut,
+  LucideUserRound,
 } from '@lucide/angular';
 
 type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -55,6 +58,8 @@ interface Task {
     LucideStar,
     LucideX,
     LucideTrash2,
+    LucideLogOut,
+    LucideUserRound,
   ],
   template: `
     <div class="app-shell">
@@ -97,17 +102,17 @@ interface Task {
             <input [(ngModel)]="q" (ngModelChange)="load()" placeholder="Search your tasks..." />
             <kbd>/</kbd>
           </div>
-          <div class="profile">
-            <div class="avatar">A</div>
-            <div class="profile-copy"><strong>Awesome</strong><span>My workspace</span></div>
-          </div>
+          <button class="profile" type="button" (click)="openProfile()" aria-label="Open profile">
+            <div class="avatar">{{ userInitial }}</div>
+            <div class="profile-copy"><strong>{{ userName }}</strong><span>My workspace</span></div>
+          </button>
         </header>
 
         <main class="main">
           <div class="welcome">
             <div>
               <p class="eyebrow">{{ today | date:'EEEE, MMMM d' }}</p>
-              <h1>{{ greeting }}, Awesome<span>.</span></h1>
+              <h1>{{ greeting }}, {{ userName }}<span>.</span></h1>
               <p class="subtext">Here is what is happening with your tasks.</p>
             </div>
             <button class="primary-btn primary-btn--hero" (click)="openEditor()"><span class="btn-icon"><svg lucidePlus width="17" height="17"></svg></span><span>New task</span></button>
@@ -221,6 +226,32 @@ interface Task {
       </section>
     </div>
 
+    <div class="modal-backdrop" *ngIf="profileOpen" (click)="closeProfile()">
+      <section class="modal profile-modal" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <div><p class="eyebrow">ACCOUNT</p><h2>Your profile</h2></div>
+          <button class="close-btn" type="button" (click)="closeProfile()" aria-label="Close"><svg lucideX width="20" height="20"></svg></button>
+        </div>
+
+        <form (ngSubmit)="saveProfile()">
+          <label>Full name
+            <div class="profile-input"><svg lucideUserRound width="16" height="16"></svg><input [(ngModel)]="profileDraft.name" name="profileName" required maxlength="80"></div>
+          </label>
+          <label>Email address
+            <div class="profile-input"><svg lucideMail width="16" height="16"></svg><input type="email" [(ngModel)]="profileDraft.email" name="profileEmail" required email></div>
+          </label>
+          <div class="modal-actions profile-actions">
+            <span></span>
+            <button type="button" class="ghost-btn" (click)="closeProfile()">Cancel</button>
+            <button type="submit" class="primary-btn" [disabled]="profileSaving">{{ profileSaving ? 'Saving...' : 'Save profile' }}</button>
+          </div>
+        </form>
+
+        <div class="account-divider"></div>
+        <button class="logout-btn" type="button" (click)="logout()"><svg lucideLogOut width="15" height="15"></svg> Sign out</button>
+      </section>
+    </div>
+
     <div class="toast" *ngIf="toast">{{ toast }}</div>
   `,
   styles: [`
@@ -234,19 +265,22 @@ interface Task {
     .nav{display:grid;gap:5px}.nav-item,.category-link{width:100%;border:0;background:transparent;color:#cdd1d1;text-align:left;border-radius:10px;padding:11px 12px;display:flex;align-items:center;gap:11px}.nav-item:hover,.category-link:hover{background:#4a5859;color:#fff}.nav-item.active{background:#f4d6cc;color:#32373b;font-weight:700}.nav-icon{width:18px;height:18px;display:grid;place-items:center}.nav-icon svg{width:17px;height:17px}.nav-count{margin-left:auto;background:#c83e4d;color:#fff;border-radius:99px;font-size:10px;padding:3px 7px}
     .sidebar-section{margin-top:30px}.section-label{font-size:10px;letter-spacing:.14em;color:#8e9899;margin:0 12px 9px}.category-link{font-size:13px}.dot,.plus{width:7px;height:7px;border-radius:50%;background:#f4b860;display:inline-block}.plus{background:transparent;width:14px;height:14px;display:grid;place-items:center;color:#aeb6b7}.plus svg{width:14px;height:14px}.muted{color:#90999a!important}
     .focus-card{margin-top:auto;background:#4a5859;border-radius:14px;padding:15px}.focus-icon{color:#f4b860;display:inline-flex}.search-icon{display:inline-flex;flex:none}.primary-btn{display:inline-flex;align-items:center;gap:6px}.focus-card strong{display:block;font-size:12px;margin-top:8px}.focus-card p{color:#bfc4c5;font-size:11px;line-height:1.55;margin:5px 0 0}
-    .content{min-width:0;flex:1}.topbar{height:72px;background:#fff;border-bottom:1px solid #e7e4e2;display:flex;align-items:center;justify-content:space-between;padding:0 38px;gap:25px}.search{height:40px;max-width:470px;flex:1;display:flex;align-items:center;gap:9px;color:#899092;background:#f7f7f6;border:1px solid #ebe9e7;border-radius:10px;padding:0 11px}.search input{border:0;outline:0;background:transparent;width:100%;color:#32373b}.search kbd{border:1px solid #ddd8d5;background:#fff;border-radius:5px;padding:1px 6px;font-size:11px;color:#9a9d9d}.profile{display:flex;align-items:center;gap:10px}.avatar{width:35px;height:35px;border-radius:50%;background:#f4d6cc;display:grid;place-items:center;font-weight:800;color:#32373b}.profile-copy strong{display:block;font-size:12px}.profile-copy span{font-size:10px;color:#8c9495}.mobile-menu{display:none}
+    .content{min-width:0;flex:1}.topbar{height:72px;background:#fff;border-bottom:1px solid #e7e4e2;display:flex;align-items:center;justify-content:space-between;padding:0 38px;gap:25px}.search{height:40px;max-width:470px;flex:1;display:flex;align-items:center;gap:9px;color:#899092;background:#f7f7f6;border:1px solid #ebe9e7;border-radius:10px;padding:0 11px}.search input{border:0;outline:0;background:transparent;width:100%;color:#32373b}.search kbd{border:1px solid #ddd8d5;background:#fff;border-radius:5px;padding:1px 6px;font-size:11px;color:#9a9d9d}.profile{border:0;background:transparent;display:flex;align-items:center;gap:10px;padding:5px 7px;border-radius:10px;text-align:left;color:#32373b}.profile:hover{background:#f7f7f6}.avatar{width:35px;height:35px;border-radius:50%;background:#f4d6cc;display:grid;place-items:center;font-weight:800;color:#32373b}.profile-copy strong{display:block;font-size:12px}.profile-copy span{font-size:10px;color:#8c9495}.mobile-menu{display:none}
     .main{max-width:1220px;margin:auto;padding:38px}.welcome{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:28px}.eyebrow{font-size:10px;letter-spacing:.14em;color:#8b9293;font-weight:700;margin:0 0 8px;text-transform:uppercase}.welcome h1{font-size:30px;letter-spacing:-.03em;margin:0}.welcome h1 span{color:#c83e4d}.subtext{color:#899092;font-size:13px;margin:7px 0 0}.primary-btn{border:0;background:#c83e4d;color:#fff;border-radius:9px;padding:11px 16px;font-weight:700;box-shadow:0 5px 14px rgba(200,62,77,.16)}.primary-btn:hover{filter:brightness(.95)}.primary-btn:disabled{opacity:.55;cursor:wait}.primary-btn span{font-size:18px;vertical-align:-1px;margin-right:4px}
     .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:26px}.stat-card{background:#fff;border:1px solid #ebe8e5;border-radius:13px;padding:17px;min-height:112px;position:relative}.stat-card>div:not(.progress-head){display:inline-flex;vertical-align:middle}.stat-icon{width:34px;height:34px;border-radius:9px;align-items:center;justify-content:center;margin-right:9px;font-weight:800;display:inline-flex}.stat-icon svg{width:17px;height:17px}.gunmetal{background:#e7e9e9;color:#32373b}.bronze{background:#fff0d9;color:#a86b12}.brick{background:#fae1e4;color:#c83e4d}.stat-card span{display:block;color:#858d8e;font-size:10px}.stat-card strong{font-size:22px;line-height:1.4}.stat-card small{display:block;color:#a0a6a7;font-size:9px;margin-top:10px}.progress-card{padding:18px}.progress-head{display:flex;justify-content:space-between!important;align-items:center}.progress-head strong{font-size:19px}.progress-track{height:7px;background:#eceeed;border-radius:99px;margin-top:15px;overflow:hidden}.progress-fill{height:100%;background:#f4b860;border-radius:99px;transition:width .3s ease}
     .task-panel{background:#fff;border:1px solid #ebe8e5;border-radius:15px;overflow:hidden}.panel-head{padding:19px 21px;border-bottom:1px solid #efedeb;display:flex;justify-content:space-between;align-items:center;gap:15px}.panel-head h2{font-size:16px;margin:0 0 3px}.panel-head>div>span{font-size:10px;color:#92999a}.toolbar{display:flex;gap:8px;align-items:center}.segmented{background:#f5f5f4;border-radius:8px;padding:3px;display:flex}.segmented button,.toolbar select{border:0;background:transparent;color:#7b8384;font-size:10px;padding:7px 9px;border-radius:6px}.segmented button.active{background:#fff;color:#32373b;box-shadow:0 1px 4px rgba(0,0,0,.07);font-weight:700}.toolbar select{border:1px solid #e6e3e1;background:#fff}
     .task-list{padding:6px 21px}.task-row{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid #f0eeec}.task-row:last-child{border-bottom:0}.check{width:20px;height:20px;border:1.5px solid #b8bdbd;background:#fff;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-size:11px}.check.done{background:#c83e4d;border-color:#c83e4d}.check svg{display:block}.task-body{min-width:0;flex:1}.task-title-line{display:flex;align-items:center;gap:9px}.task-title-line h3{font-size:13px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.task-body.completed h3{text-decoration:line-through;color:#969c9d}.task-body>p{font-size:11px;color:#8a9293;margin:5px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.priority{font-size:8px;font-weight:800;padding:3px 6px;border-radius:99px;letter-spacing:.04em}.priority.high{background:#fae1e4;color:#c83e4d}.priority.medium{background:#fff0d9;color:#9a681d}.priority.low{background:#e8eeee;color:#4a5859}.meta{display:flex;gap:14px;color:#8b9394;font-size:9px}.mini-dot{width:6px;height:6px;background:#f4b860;border-radius:50%;display:inline-block;margin-right:5px}.overdue{color:#c83e4d}.muted-meta{color:#afb3b4}.icon-btn,.close-btn{border:0;background:transparent;color:#8f9697;font-size:20px;padding:5px}.icon-btn:hover{color:#32373b}.icon-btn svg{display:block}
     .empty{text-align:center;padding:62px 20px}.empty-icon{width:50px;height:50px;margin:auto;border-radius:50%;display:grid;place-items:center;background:#f4d6cc;color:#c83e4d;font-weight:800}.empty-icon svg{width:24px;height:24px}.empty h3{margin:15px 0 5px;font-size:15px}.empty p{color:#969c9d;font-size:11px;margin:0 0 17px}.secondary-btn{border:1px solid #ddd8d5;background:#fff;border-radius:10px;padding:10px 14px;font-weight:800;color:#4a5859;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 10px rgba(50,55,59,.05);transition:all .18s ease}.secondary-btn:hover{border-color:#c9c2be;background:#faf9f8;transform:translateY(-1px);box-shadow:0 7px 16px rgba(50,55,59,.08)}.secondary-btn .btn-arrow{margin-left:2px;transition:transform .18s ease}.secondary-btn:hover .btn-arrow{transform:translateX(2px)}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(30,34,36,.48);display:grid;place-items:center;padding:20px;z-index:20}.modal{background:#fff;border-radius:16px;width:min(570px,100%);max-height:92vh;overflow:auto;box-shadow:0 25px 70px rgba(0,0,0,.22);padding:25px}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.modal-head h2{margin:0;font-size:21px}.close-btn{font-size:25px;line-height:1;display:grid;place-items:center}.modal label{display:block;font-size:10px;font-weight:800;color:#596162;margin-bottom:15px}.modal input,.modal textarea,.modal select{width:100%;margin-top:7px;border:1px solid #dedbd8;border-radius:8px;padding:10px 11px;outline:0;background:#fff;color:#32373b;font-size:12px}.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:#f4b860;box-shadow:0 0 0 3px rgba(244,184,96,.15)}.modal textarea{resize:vertical}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.modal-actions{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #eeeae7;padding-top:18px;margin-top:4px}.ghost-btn,.danger-btn{border:0;background:#f4f4f2;color:#4a5859;border-radius:8px;padding:10px 13px;font-weight:700;font-size:11px}.danger-btn{background:#fae1e4;color:#c83e4d;display:inline-flex;align-items:center;gap:6px}.toast{position:fixed;right:24px;bottom:24px;background:#32373b;color:#fff;border-radius:9px;padding:12px 15px;font-size:11px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:30}.mobile-backdrop{display:none}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(30,34,36,.48);display:grid;place-items:center;padding:20px;z-index:20}.modal{background:#fff;border-radius:16px;width:min(570px,100%);max-height:92vh;overflow:auto;box-shadow:0 25px 70px rgba(0,0,0,.22);padding:25px}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}.modal-head h2{margin:0;font-size:21px}.close-btn{font-size:25px;line-height:1;display:grid;place-items:center}.modal label{display:block;font-size:10px;font-weight:800;color:#596162;margin-bottom:15px}.modal input,.modal textarea,.modal select{width:100%;margin-top:7px;border:1px solid #dedbd8;border-radius:8px;padding:10px 11px;outline:0;background:#fff;color:#32373b;font-size:12px}.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:#f4b860;box-shadow:0 0 0 3px rgba(244,184,96,.15)}.modal textarea{resize:vertical}.profile-input{display:flex;align-items:center;gap:8px;width:100%;margin-top:7px;border:1px solid #dedbd8;border-radius:8px;padding:0 10px}.profile-input svg{color:#9ca2a3}.profile-input input{margin-top:0;border:0}.account-divider{height:1px;background:#eeeae7;margin:19px 0 11px}.logout-btn{width:100%;border:0;background:#fae1e4;color:#c83e4d;border-radius:8px;padding:10px 12px;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px}.profile-modal{width:min(480px,100%)}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.modal-actions{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;border-top:1px solid #eeeae7;padding-top:18px;margin-top:4px}.ghost-btn,.danger-btn{border:0;background:#f4f4f2;color:#4a5859;border-radius:8px;padding:10px 13px;font-weight:700;font-size:11px}.danger-btn{background:#fae1e4;color:#c83e4d;display:inline-flex;align-items:center;gap:6px}.toast{position:fixed;right:24px;bottom:24px;background:#32373b;color:#fff;border-radius:9px;padding:12px 15px;font-size:11px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:30}.mobile-backdrop{display:none}
     @media(max-width:900px){.sidebar{position:fixed;left:-270px;top:0;bottom:0;z-index:15;transition:left .2s}.sidebar.open{left:0}.mobile-backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:14}.mobile-menu{display:block;border:0;background:transparent;font-size:21px;color:#32373b}.topbar{padding:0 18px}.stats{grid-template-columns:1fr 1fr}.main{padding:25px 18px}}
     @media(max-width:620px){.profile-copy{display:none}.search{max-width:none}.welcome{align-items:flex-start;flex-direction:column}.welcome h1{font-size:25px}.stats{grid-template-columns:1fr 1fr}.stat-card{min-height:100px}.panel-head{align-items:flex-start;flex-direction:column}.toolbar{width:100%;flex-wrap:wrap}.task-row{gap:9px}.task-title-line{align-items:flex-start;flex-direction:column;gap:4px}.form-grid{grid-template-columns:1fr}.modal{padding:19px}.modal-actions{grid-template-columns:1fr 1fr}.modal-actions span{display:none}.danger-btn{grid-column:1 / -1}.modal-actions .primary-btn{width:100%}}
   `]
 })
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private api = 'http://localhost:8080/api/tasks';
 
   tasks: Task[] = [];
@@ -256,10 +290,13 @@ export class DashboardComponent implements OnInit {
   sortBy = 'due';
   mobileNavOpen = false;
   editorOpen = false;
+  profileOpen = false;
+  profileSaving = false;
   saving = false;
   editingId?: number;
   toast = '';
   draft: Task = this.blankTask();
+  profileDraft = { name: '', email: '' };
   today = new Date();
 
   navItems = [
@@ -270,6 +307,9 @@ export class DashboardComponent implements OnInit {
   ];
 
   ngOnInit(): void { this.load(); }
+
+  get userName(): string { return this.auth.user?.name || 'User'; }
+  get userInitial(): string { return this.userName.trim().charAt(0).toUpperCase() || 'U'; }
 
   get greeting(): string {
     const hour = new Date().getHours();
@@ -308,6 +348,41 @@ export class DashboardComponent implements OnInit {
       return (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31');
     });
     return list;
+  }
+
+  openProfile(): void {
+    const user = this.auth.user;
+    if (!user) return;
+    this.profileDraft = { ...user };
+    this.profileOpen = true;
+  }
+
+  closeProfile(): void {
+    if (this.profileSaving) return;
+    this.profileOpen = false;
+  }
+
+  saveProfile(): void {
+    if (!this.profileDraft.name.trim() || !this.profileDraft.email.trim() || this.profileSaving) return;
+    this.profileSaving = true;
+
+    this.auth.updateProfile(this.profileDraft.name, this.profileDraft.email).subscribe({
+      next: () => {
+        this.profileSaving = false;
+        this.profileOpen = false;
+        this.showToast('Profile updated');
+      },
+      error: error => {
+        this.profileSaving = false;
+        this.showToast(error?.error?.message || 'Could not update profile.');
+      }
+    });
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.profileOpen = false;
+    this.router.navigate(['/login']);
   }
 
   load(): void {
